@@ -21,7 +21,7 @@
  * *)
 exception Illegal_expansion of string
 
-type symbol = NT of string | T of string
+type symbol = NT of string | T of string | ID | NUM
 
 type rule = Rule of (symbol list)
 type production = Production of (symbol * (rule list))
@@ -71,9 +71,12 @@ let _gt        = T ">"
 let _space     = T " "
 
 (* TODO: needs to be more flexible *)
-let _id        = T "var"
-let _num       = T "42"
-
+let _id        = ID
+let _num       = NUM
+let num _ = 
+  let n = (Random.self_init () ; Random.int 50) in
+    string_of_int n
+ 
 (*
 let nonterminals = [p; sl; s; c; e; tt; t; r; b]
 let terminals    = [_eps; _semicolon; _if; _else; _while; _true; _false;
@@ -90,7 +93,7 @@ let grammar = GrammarMap.empty
                                                          _else; _lbracket; sl; _rbracket];
                                                    Rule [_while; _lparen; c; _rparen;
                                                          _lbracket; sl; _rbracket];
-                                                   Rule [_id; _assign; e];
+                                                   Rule [ID; _assign; e];
                                                    Rule [_print; _lparen; e; _rparen]]))
             |> GrammarMap.add c  (Production (c,  [Rule [e; r; e];
                                                    Rule [_true];
@@ -99,24 +102,40 @@ let grammar = GrammarMap.empty
             |> GrammarMap.add tt (Production (tt, [Rule [b; t; tt];
                                                    Rule [_eps]]))
             |> GrammarMap.add t  (Production (t,  [Rule [_lparen; e; _rparen];
-                                                   Rule [_id];
-                                                   Rule [_read;_space; _id];
-                                                   Rule [_num]]))
+                                                   Rule [ID];
+                                                   Rule [_read;_space; ID];
+                                                   Rule [NUM]]))
             |> GrammarMap.add r  (Production (r,  [Rule [_eq];
                                                    Rule [_lt];
                                                    Rule [_gt]]))
             |> GrammarMap.add b  (Production (b,  [Rule [_plus];
                                                    Rule [_minus]]))
+let randomly_choose l =
+    Random.self_init () ; List.nth l (Random.int (List.length l))
 
+
+(*TODO*)
+let rec get_id_aux n s = 
+    let alphabet = ["a"; "b"; "c"; "d"; "e"; "x"; "y"; "z"] in
+    let nums = ["1";"2";"3";"4";"5";"6";"7";"8";"9";"0"] in
+    match n with 
+    | 0 -> s
+    | _ -> let c = randomly_choose (List.append alphabet nums) in
+            get_id_aux (n-1) s^c
+
+let get_id _ =
+    let alphabet = ["a"; "b"; "c"; "d"; "e"; "x"; "y"; "z"] in
+    let len = Random.self_init () ; Random.int 6 in
+    let s = randomly_choose alphabet in
+    get_id_aux len s 
 
 
 let string_of_symbol s =
   match s with
   | NT name
   | T  name -> name
-
-let randomly_choose l =
-    Random.self_init () ; List.nth l (Random.int (List.length l))
+  | ID -> get_id ()
+  | NUM -> num ()   
 
 let random_whitespace _ =
   let whitespace = [" "; ""; "\t"; "\n"] in
@@ -134,6 +153,8 @@ let choose_rule (p : production) : rule =
   match p with
   | Production (s, rules) ->
     match s with
+    | ID 
+    | NUM -> raise (Illegal_expansion ("cannot expand an id or num"))
     | T t -> raise (Illegal_expansion ("cannot expand terminal"^t))
     | NT _ -> randomly_choose rules
 
@@ -146,8 +167,8 @@ let rec derive (sl : (symbol list)) : (symbol list) =
     match sl with
     | [] -> []
     | hd :: tl -> match hd with
-                  | T _ -> hd::(derive tl)
-                  | NT _ -> let new_hd = expand hd in
+      | ID | NUM | T _ -> hd::(derive tl)
+      | NT _ -> let new_hd = expand hd in
                              derive (List.append new_hd tl)
                 
 let () = print_endline (string_of_symbol_list (derive [p]))
