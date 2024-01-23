@@ -1,0 +1,8 @@
+(env
+ (dev
+   (flags (:standard -warn-error -A))))
+
+(executable
+ (public_name test_gen)
+ (name main)
+ (libraries test_gen))
