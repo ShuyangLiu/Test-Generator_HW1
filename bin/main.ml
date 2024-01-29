@@ -175,11 +175,16 @@ let rec output_test count =
   if count <= 0
   then ()
   else
-    let filename = "testcases/test"^(string_of_int count) in
+    let filename = "testcases/newtest"^(string_of_int count) in
     let content = String.trim (string_of_symbol_list (derive [p])) in
     if (content != String.empty) && ((String.length content) > 1)
     then let oc = open_out filename in
-      (Printf.fprintf oc "%s" content ; close_out oc ; output_test (count - 1))
+      let oc_out = open_out (filename^".out") in
+      (Printf.fprintf oc "%s\n" content ;
+       Printf.fprintf oc_out "%s\n" "Program parsed successfully" ;
+       close_out oc_out ;
+       close_out oc ; 
+       output_test (count - 1))
     else (output_test count)
 
 let () =
