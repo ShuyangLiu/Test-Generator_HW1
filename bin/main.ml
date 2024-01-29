@@ -73,7 +73,7 @@ let _space     = T " "
 (* TODO: needs to be more flexible *)
 let _id        = ID
 let _num       = NUM
-let num _ = 
+let num _ =
   let n = (Random.self_init () ; Random.int 50) in
     string_of_int n
  
@@ -135,7 +135,7 @@ let string_of_symbol s =
   | NT name
   | T  name -> name
   | ID -> get_id ()
-  | NUM -> num ()   
+  | NUM -> num ()
 
 let random_whitespace _ =
   let whitespace = [" "; ""; "\t"; "\n"] in
@@ -146,19 +146,19 @@ let rec string_of_symbol_list (sl:(symbol list)) =
   match sl with
   | [] -> ""
   | hd :: tl -> (string_of_symbol hd)^(random_whitespace ())^(string_of_symbol_list tl)
- 
+
 
 (* randomly choose a rule from the production *)
 let choose_rule (p : production) : rule =
   match p with
   | Production (s, rules) ->
     match s with
-    | ID 
+    | ID
     | NUM -> raise (Illegal_expansion ("cannot expand an id or num"))
     | T t -> raise (Illegal_expansion ("cannot expand terminal"^t))
     | NT _ -> randomly_choose rules
 
-let expand (nt : symbol) : (symbol list) = 
+let expand (nt : symbol) : (symbol list) =
     let p = GrammarMap.find nt grammar in
     match (choose_rule p) with
     | Rule rl -> rl
@@ -170,5 +170,25 @@ let rec derive (sl : (symbol list)) : (symbol list) =
       | ID | NUM | T _ -> hd::(derive tl)
       | NT _ -> let new_hd = expand hd in
                              derive (List.append new_hd tl)
-                
-let () = print_endline (string_of_symbol_list (derive [p]))
+
+let rec output_test count =
+  if count <= 0
+  then ()
+  else
+    let filename = "testcases/test"^(string_of_int count) in
+    let content = String.trim (string_of_symbol_list (derive [p])) in
+    if (content != String.empty) && ((String.length content) > 1)
+    then let oc = open_out filename in
+      (Printf.fprintf oc "%s" content ; close_out oc ; output_test (count - 1))
+    else (output_test count)
+
+let () =
+  let open Core in
+  Command.basic
+    ~summary:"Generate random test cases"
+    Command.Param.(
+      anon ("count" %: int)
+      |> map ~f:(fun count ->
+          fun () -> (output_test count) ;
+          printf "generated tests: %d\n" count))
+  |> Command_unix.run

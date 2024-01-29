@@ -5,4 +5,4 @@
 (executable
  (public_name test_gen)
  (name main)
- (libraries test_gen))
+ (libraries core core_unix.command_unix test_gen))
