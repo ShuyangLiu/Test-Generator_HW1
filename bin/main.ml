@@ -73,18 +73,12 @@ let _space     = T " "
 (* TODO: needs to be more flexible *)
 let _id        = ID
 let _num       = NUM
+
 let num _ =
   let n = (Random.self_init () ; Random.int 50) in
     string_of_int n
- 
-(*
-let nonterminals = [p; sl; s; c; e; tt; t; r; b]
-let terminals    = [_eps; _semicolon; _if; _else; _while; _true; _false;
-                    _read; _print; _assign; _lbracket; _rbracket; _lparen;
-                    _rparen; _plus; _minus; _eq; _lt; _gt]
-*)
 
-let grammar = GrammarMap.empty 
+let grammar = GrammarMap.empty
             |> GrammarMap.add p  (Production (p,  [Rule [sl]]))
             |> GrammarMap.add sl (Production (sl, [Rule [s; _semicolon; sl];
                                                    Rule [_eps]]))

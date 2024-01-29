@@ -1,2 +1,4 @@
 (library
- (name test_gen))
+ (name test_gen)
+ (libraries core core_unix.command_unix)
+)
